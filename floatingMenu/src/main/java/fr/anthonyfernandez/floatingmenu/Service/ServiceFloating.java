@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -24,6 +25,8 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.ListPopupWindow;
 import android.widget.PopupWindow;
+
+import fr.anthonyfernandez.floatingmenu.Activities.MainActivity;
 import fr.anthonyfernandez.floatingmenu.R;
 import fr.anthonyfernandez.floatingmenu.Adapter.CustomAdapter;
 import fr.anthonyfernandez.floatingmenu.Manager.PInfo;
@@ -51,10 +54,10 @@ public class ServiceFloating extends Service {
 		return null;
 	}
 
-	@Override 
+	@Override
 	public void onCreate() {
 		super.onCreate();
-		
+
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
 		RetrievePackages getInstalledPackages = new RetrievePackages(getApplicationContext());
@@ -73,9 +76,9 @@ public class ServiceFloating extends Service {
 		windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
 		chatHead = new ImageView(this);
-		
+
 		chatHead.setImageResource(R.drawable.floating2);
-		
+
 		if(prefs.getString("ICON", "floating2").equals("floating3")){
 			chatHead.setImageResource(R.drawable.floating3);
 		} else if(prefs.getString("ICON", "floating2").equals("floating4")){
@@ -109,34 +112,34 @@ public class ServiceFloating extends Service {
 
 				@Override public boolean onTouch(View v, MotionEvent event) {
 					switch (event.getAction()) {
-					case MotionEvent.ACTION_DOWN:
+						case MotionEvent.ACTION_DOWN:
 
-						// Get current time in nano seconds.
-						long pressTime = System.currentTimeMillis();
+							// Get current time in nano seconds.
+							long pressTime = System.currentTimeMillis();
 
 
-						// If double click...
-						if (pressTime - lastPressTime <= 300) {
-							createNotification();
-							ServiceFloating.this.stopSelf();
-							mHasDoubleClicked = true;
-						}
-						else {     // If not double click....
-							mHasDoubleClicked = false;
-						}
-						lastPressTime = pressTime; 
-						initialX = paramsF.x;
-						initialY = paramsF.y;
-						initialTouchX = event.getRawX();
-						initialTouchY = event.getRawY();
-						break;
-					case MotionEvent.ACTION_UP:
-						break;
-					case MotionEvent.ACTION_MOVE:
-						paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
-						paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
-						windowManager.updateViewLayout(chatHead, paramsF);
-						break;
+							// If double click...
+							if (pressTime - lastPressTime <= 300) {
+								createNotification();
+								ServiceFloating.this.stopSelf();
+								mHasDoubleClicked = true;
+							}
+							else {     // If not double click....
+								mHasDoubleClicked = false;
+							}
+							lastPressTime = pressTime;
+							initialX = paramsF.x;
+							initialY = paramsF.y;
+							initialTouchX = event.getRawX();
+							initialTouchY = event.getRawY();
+							break;
+						case MotionEvent.ACTION_UP:
+							break;
+						case MotionEvent.ACTION_MOVE:
+							paramsF.x = initialX + (int) (event.getRawX() - initialTouchX);
+							paramsF.y = initialY + (int) (event.getRawY() - initialTouchY);
+							windowManager.updateViewLayout(chatHead, paramsF);
+							break;
 					}
 					return false;
 				}
@@ -166,7 +169,7 @@ public class ServiceFloating extends Service {
 			ListPopupWindow popup = new ListPopupWindow(this);
 			popup.setAnchorView(anchor);
 			popup.setWidth((int) (display.getWidth()/(1.5)));
-			//ArrayAdapter<String> arrayAdapter = 
+			//ArrayAdapter<String> arrayAdapter =
 			//new ArrayAdapter<String>(this,R.layout.list_item, myArray);
 			popup.setAdapter(new CustomAdapter(getApplicationContext(), R.layout.row, listCity));
 			popup.setOnItemClickListener(new OnItemClickListener() {
@@ -197,12 +200,16 @@ public class ServiceFloating extends Service {
 	public void createNotification(){
 		Intent notificationIntent = new Intent(getApplicationContext(), ServiceFloating.class);
 		PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 0, notificationIntent, 0);
+		NotificationManager notificationManager  = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
-		Notification notification = new Notification(R.drawable.floating2, "Click to start launcher",System.currentTimeMillis());
-		notification.setLatestEventInfo(getApplicationContext(), "Start launcher" ,  "Click to start launcher", pendingIntent);
-		notification.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_ONGOING_EVENT;
-
-		NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+		Notification notification = new NotificationCompat.Builder(getApplicationContext())
+				.setSmallIcon(R.drawable.floating3).setTicker("Ticker")
+				.setWhen(System.currentTimeMillis())
+				.setAutoCancel(true)
+				.setOngoing(true)
+				.setContentIntent(pendingIntent)
+				.setContentTitle("NotificationTitle")
+				.setContentText("You have a new message").build();
 
 		notificationManager.notify(ID_NOTIFICATION,notification);
 	}
